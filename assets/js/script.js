@@ -11,21 +11,24 @@ function generateTaskId() {
     } else{
         nextId += 1;
     }
-    localStorage.setItem("nextID", JSON.stringify(nextId));
+    localStorage.setItem("nextId", JSON.stringify(nextId));
     return nextId;
 }
 
 // Todo: create a function to create a task card
 function createTaskCard(task) {
+
+//These three create the card itself
     const taskCard = $("<div>").addClass("card w-75 task-card draggable my-3").attr("data-task-id", task.id);
     const cardHeader = $("<div>").addClass("card-header h4").text(task.title);
     const cardBody = $("<div>").addClass("card-body");
+
+//These three create the content of the card, with the button event listener for deletion
     const cardDescription = $('<p>').addClass("card-text").text(task.description);
     const cardDueDate = $('<p>').addClass("card-text").text(task.dueDate);
     const cardDeleteButton = $("<button>").addClass("btn btn-danger delete").text("Delete").attr("data-task-id", task.id);
     
     cardDeleteButton.on("click", handleDeleteTask);
-
 
 //this is changing the color of the card if the due date is day of or overdue
     if(task.dueDate && task.status !== 'done'){
@@ -39,6 +42,7 @@ function createTaskCard(task) {
         }
     }
 
+//this adds the content to the body and then body and header to the card and returns it
     cardBody.append(cardDescription, cardDueDate, cardDeleteButton);
     taskCard.append(cardHeader, cardBody);
 
@@ -65,7 +69,7 @@ function renderTaskList() {
     for(let index = 0; index < taskList.length; index++){
         if (taskList[index].status === "to-do"){
             todoList.append(createTaskCard(taskList[index]));
-        } else if(taskList[index.status === "in-progress"]){
+        } else if(taskList[index].status === "in-progress"){
             inProgressList.append(createTaskCard(taskList[index]));
         } else if(taskList[index].status === "done"){
             doneList.append(createTaskCard(taskList[index]));
@@ -77,12 +81,7 @@ function renderTaskList() {
         zIndex: 100,
 
         helper: function(event) {
-            let original;
-            if($(event.target).hasClass("ui-draggable")){
-                original = $(event.target);
-            } else {
-                original = $(event.target).closest("ui-draggable");
-            }
+            let original = $(event.target).hasClass("ui-draggable") ? $(event.target) : $(event.target).closest("ui-draggable");
             
             return original.clone().css({
                 maxWidth: original.outerWidth(),
@@ -95,13 +94,13 @@ function renderTaskList() {
 function handleAddTask(event){
     event.preventDefault();
 
-//the object that will hold the generated ID as well as the inputs from the user
+//the object that will hold the generated ID as well as the inputs from the user for the task
     const task = {
         id: generateTaskId(),
         title: $("#taskTitle").val(),
         description: $("#taskDescription").val(),
         dueDate: $("#taskDueDate").val(),
-        status: 'to-do'
+        status: 'in-progress'
     }
 
 //Adds the object to the variable taskList at the top, sets it in local storage, and then wipes the input
@@ -117,7 +116,7 @@ function handleAddTask(event){
 // Todo: create a function to handle deleting a task
 function handleDeleteTask(event){
     event.preventDefault();
-    const taskID = $(this).attr("data-task-id")
+    const taskId = $(this).attr("data-task-id")
     
     localStorage.setItem("tasks", JSON.stringify(taskList))
     renderTaskList();
@@ -125,11 +124,12 @@ function handleDeleteTask(event){
 
 // Todo: create a function to handle dropping a task into a new status lane
 function handleDrop(event, ui) {
-    const taskID = ui.draggable.dataset.taskID;
+    console.log("Check")
+    const taskId = ui.draggable[0].dataset.taskId;
     const updatedStatus = event.target.id;
 
     for(let index = 0; index < taskList.length;index++){
-        if(taskList[index].id == parseInt(taskID)){
+        if(taskList[index].id == parseInt(taskId)){
             taskList[index].status = updatedStatus;
         }
     }
@@ -142,12 +142,13 @@ $(document).ready(function () {
     renderTaskList();
 
     $("#taskForm").on("submit", handleAddTask)
-
-    $(".lane").droppable({
-        accept: ".draggable",
-        drop: handleDrop
-    })
-
+    console.log("vibe check")
+    // // $(".lane").droppable({
+    // //     accept: ".draggable",
+    // //     drop: handleDrop,
+        
+    // })
+    
     $("#taskDueDate").datepicker({
         changeMonth: true,
         changeYear: true
