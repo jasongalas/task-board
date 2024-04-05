@@ -36,7 +36,7 @@ function createTaskCard(task) {
         const taskDueDate = dayjs(task.dueDate, "DD/MM/YYYY");
         if(now.isSame(taskDueDate, 'day')){
             taskCard.addClass("bg-warning text-white");
-        } else if (now.isAfter(taskDueDate, 'day')){
+        } else if (now.isAfter(taskDueDate)){
             taskCard.addClass("bg-danger text-white");
             cardDeleteButton.addClass("border-light");
         }
@@ -63,7 +63,7 @@ function renderTaskList() {
     inProgressList.empty();
 
 //right column variable
-    const doneList = $("done-cards");
+    const doneList = $("#done-cards");
     doneList.empty();
 
     for(let index = 0; index < taskList.length; index++){
@@ -77,13 +77,12 @@ function renderTaskList() {
     }
 
     $(".draggable").draggable({
-        opacity: 0.6,
+        opacity: 0.5,
         zIndex: 100,
 
         helper: function(event) {
-            let original = $(event.target).hasClass("ui-draggable") ? $(event.target) : $(event.target).closest("ui-draggable");
-            
-            return original.clone().css({
+            let original = $(event.target).hasClass("ui-draggable") ? $(event.target) : $(event.target).closest(".ui-draggable");
+                return original.clone().css({
                 maxWidth: original.outerWidth(),
             });
         }
@@ -100,8 +99,10 @@ function handleAddTask(event){
         title: $("#taskTitle").val(),
         description: $("#taskDescription").val(),
         dueDate: $("#taskDueDate").val(),
-        status: 'in-progress'
+        status: 'to-do'
     }
+
+    console.log("Task to be added", task)
 
 //Adds the object to the variable taskList at the top, sets it in local storage, and then wipes the input
     taskList.push(task);
@@ -116,15 +117,28 @@ function handleAddTask(event){
 // Todo: create a function to handle deleting a task
 function handleDeleteTask(event){
     event.preventDefault();
-    const taskId = $(this).attr("data-task-id")
+    const deletionId = $(this).data("task-id");
+    console.log("Deletion ID:", deletionId);
     
-    localStorage.setItem("tasks", JSON.stringify(taskList))
-    renderTaskList();
+     // Find the index of the task with the given ID
+     const taskIndex = taskList.findIndex(task => task.id === deletionId);
+     console.log("Task index:", taskIndex); // Check the index of the task
+
+     // Check if the task was found
+     if (taskIndex !== -1) {
+         // Remove the task from the array using splice
+         taskList.splice(taskIndex, 1);
+ 
+         // Update localStorage and re-render the task list
+         localStorage.setItem("tasks", JSON.stringify(taskList));
+         renderTaskList();
+     }
+    
 }
 
 // Todo: create a function to handle dropping a task into a new status lane
 function handleDrop(event, ui) {
-    console.log("Check")
+    
     const taskId = ui.draggable[0].dataset.taskId;
     const updatedStatus = event.target.id;
 
@@ -141,16 +155,16 @@ function handleDrop(event, ui) {
 $(document).ready(function () {
     renderTaskList();
 
-    $("#taskForm").on("submit", handleAddTask)
-    console.log("vibe check")
-    // // $(".lane").droppable({
-    // //     accept: ".draggable",
-    // //     drop: handleDrop,
+    $("#taskForm").on("submit", handleAddTask);
+    
+    $(".lane").droppable({
+        accept: ".draggable",
+        drop: handleDrop
         
-    // })
+    });
     
     $("#taskDueDate").datepicker({
         changeMonth: true,
         changeYear: true
-    })
+    });
 });
